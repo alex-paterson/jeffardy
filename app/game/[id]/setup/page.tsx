@@ -52,6 +52,10 @@ export default function SetupPage({
   const [starting, setStarting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmReset, setConfirmReset] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [regeneratingClue, setRegeneratingClue] = useState<number | null>(null);
+  const [cloning, setCloning] = useState(false);
 
   async function deleteGame() {
     await fetch(`/api/games/${id}`, { method: "DELETE" });
@@ -71,11 +75,7 @@ export default function SetupPage({
         setGame(data);
         if (data.categories.length > 0) {
           setCategoryInputs(
-            data.categories
-              .map((c) => ({ name: c.name, description: (c as any).description ?? "" }))
-              .concat(
-                Array(Math.max(0, 6 - data.categories.length)).fill({ name: "", description: "" })
-              )
+            data.categories.map((c) => ({ name: c.name, description: (c as any).description ?? "" }))
           );
           if (data.categories.some((c) => c.clues.length > 0)) {
             setGeneratedClues(
@@ -85,11 +85,7 @@ export default function SetupPage({
         }
         if (data.players.length > 0) {
           setPlayerInputs(
-            data.players
-              .map((p) => ({ name: p.name, score: p.score }))
-              .concat(
-                Array(Math.max(0, 3 - data.players.length)).fill({ name: "", score: 0 })
-              )
+            data.players.map((p) => ({ name: p.name, score: p.score }))
           );
         }
       });
@@ -178,6 +174,90 @@ export default function SetupPage({
         })),
       }));
     });
+  }
+
+  async function saveAll() {
+    setSaving(true);
+    setSaved(false);
+    try {
+      // Save clue edits
+      if (generatedClues.length > 0) {
+        await Promise.all(
+          generatedClues.flatMap((cat) =>
+            cat.clues.map((clue) =>
+              fetch(`/api/clues/${clue.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  answer: clue.answer,
+                  question: clue.question,
+                  isDailyDouble: clue.isDailyDouble,
+                }),
+              })
+            )
+          )
+        );
+      }
+      // Save players
+      const validPlayers = playerInputs.filter((p) => p.name.trim());
+      if (validPlayers.length > 0) {
+        await fetch(`/api/games/${id}/players`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            players: validPlayers.map((p) => ({
+              name: p.name.trim(),
+              score: p.score,
+            })),
+          }),
+        });
+      }
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      setError("Failed to save");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function regenerateSingleClue(catIndex: number, clueIndex: number, clueId: number) {
+    setRegeneratingClue(clueId);
+    try {
+      const res = await fetch(`/api/clues/${clueId}/regenerate`, { method: "POST" });
+      if (!res.ok) throw new Error();
+      const updated = await res.json();
+      setGeneratedClues((prev) =>
+        prev.map((cat, ci) =>
+          ci === catIndex
+            ? {
+                ...cat,
+                clues: cat.clues.map((clue, cli) =>
+                  cli === clueIndex
+                    ? { ...clue, answer: updated.answer, question: updated.question, pun: updated.pun }
+                    : clue
+                ),
+              }
+            : cat
+        )
+      );
+    } catch {
+      setError("Failed to regenerate clue");
+    } finally {
+      setRegeneratingClue(null);
+    }
+  }
+
+  async function cloneGame() {
+    setCloning(true);
+    try {
+      const res = await fetch(`/api/games/${id}/clone`, { method: "POST" });
+      const newGame = await res.json();
+      window.location.href = `/game/${newGame.id}/setup`;
+    } catch {
+      setError("Failed to clone game");
+      setCloning(false);
+    }
   }
 
   async function generateClues() {
@@ -290,23 +370,54 @@ export default function SetupPage({
 
   return (
     <main className="flex-1 flex flex-col items-center p-4 pt-14 md:p-8 md:pt-14 max-w-5xl mx-auto w-full">
-      <div className="w-full flex items-start justify-between mb-8">
-        <div>
-          <h1 className="text-4xl font-bold text-jeopardy-gold mb-1">
-            {game.name}
-          </h1>
-          <p className="text-blue-200">Game Setup</p>
+      <div className="w-full mb-8">
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <textarea
+              value={game.name}
+              onChange={(e) => {
+                setGame({ ...game, name: e.target.value.replace(/\n/g, "") });
+                autoGrow(e.target);
+              }}
+              onKeyDown={(e) => { if (e.key === "Enter") e.preventDefault(); }}
+              ref={(el) => { if (el) autoGrow(el); }}
+              onBlur={() => {
+                fetch(`/api/games/${id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name: game.name }),
+                }).catch(() => {});
+              }}
+              rows={1}
+              className="text-4xl font-bold text-jeopardy-gold mb-1 bg-transparent border-b-2 border-transparent hover:border-jeopardy-gold/30 focus:border-jeopardy-gold focus:outline-none w-full resize-none overflow-hidden break-words"
+            />
+            <p className="text-blue-200">Game Setup</p>
+          </div>
         </div>
-        <div className="flex flex-col gap-2 items-end">
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={saveAll}
+            disabled={saving}
+            className="px-3 py-2 text-sm text-jeopardy-gold border border-jeopardy-gold/40 hover:bg-jeopardy-gold/10 rounded-lg font-bold transition-colors disabled:opacity-50"
+          >
+            {saving ? "Saving..." : saved ? "Saved!" : "Save"}
+          </button>
+          <button
+            onClick={cloneGame}
+            disabled={cloning}
+            className="px-3 py-2 text-sm text-white/40 hover:text-blue-300 border border-white/10 hover:border-blue-300/50 rounded-lg transition-colors"
+          >
+            {cloning ? "Cloning..." : "Clone"}
+          </button>
           {!confirmReset ? (
             <button
               onClick={() => setConfirmReset(true)}
               className="px-3 py-2 text-sm text-white/40 hover:text-jeopardy-gold border border-white/10 hover:border-jeopardy-gold/50 rounded-lg transition-colors"
             >
-              Reset Game
+              Reset
             </button>
           ) : (
-            <div className="flex gap-2">
+            <>
               <button
                 onClick={resetGame}
                 className="px-3 py-2 text-sm text-jeopardy-dark bg-jeopardy-gold hover:bg-jeopardy-gold-light rounded-lg font-bold transition-colors"
@@ -319,17 +430,17 @@ export default function SetupPage({
               >
                 Cancel
               </button>
-            </div>
+            </>
           )}
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
               className="px-3 py-2 text-sm text-white/40 hover:text-red-400 border border-white/10 hover:border-red-400/50 rounded-lg transition-colors"
             >
-              Delete Game
+              Delete
             </button>
           ) : (
-            <div className="flex gap-2">
+            <>
               <button
                 onClick={deleteGame}
                 className="px-3 py-2 text-sm text-white bg-red-600 hover:bg-red-500 rounded-lg font-bold transition-colors"
@@ -342,7 +453,7 @@ export default function SetupPage({
               >
                 Cancel
               </button>
-            </div>
+            </>
           )}
         </div>
       </div>
@@ -499,18 +610,29 @@ export default function SetupPage({
                             <span className="text-jeopardy-gold font-bold text-sm">
                               ${clue.value}
                             </span>
-                            <button
-                              onClick={() =>
-                                toggleDailyDouble(catIndex, clueIndex)
-                              }
-                              className={`px-2 py-1 text-xs rounded-md font-bold transition-colors ${
-                                clue.isDailyDouble
-                                  ? "bg-jeopardy-gold text-jeopardy-dark"
-                                  : "text-white/30 border border-white/10 hover:border-jeopardy-gold/50 hover:text-jeopardy-gold"
-                              }`}
-                            >
-                              {clue.isDailyDouble ? "DAILY DOUBLE" : "DD"}
-                            </button>
+                            <div className="flex gap-1">
+                              <button
+                                onClick={() =>
+                                  regenerateSingleClue(catIndex, clueIndex, clue.id)
+                                }
+                                disabled={regeneratingClue === clue.id}
+                                className="px-2 py-1 text-xs rounded-md text-white/30 border border-white/10 hover:border-white/30 hover:text-white/60 disabled:opacity-50 transition-colors"
+                              >
+                                {regeneratingClue === clue.id ? "..." : "Regen"}
+                              </button>
+                              <button
+                                onClick={() =>
+                                  toggleDailyDouble(catIndex, clueIndex)
+                                }
+                                className={`px-2 py-1 text-xs rounded-md font-bold transition-colors ${
+                                  clue.isDailyDouble
+                                    ? "bg-jeopardy-gold text-jeopardy-dark"
+                                    : "text-white/30 border border-white/10 hover:border-jeopardy-gold/50 hover:text-jeopardy-gold"
+                                }`}
+                              >
+                                {clue.isDailyDouble ? "DAILY DOUBLE" : "DD"}
+                              </button>
+                            </div>
                           </div>
                           <div className="space-y-2">
                             <div>

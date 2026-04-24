@@ -30,6 +30,9 @@ body {
 input, textarea, select {
   font-size: 16px !important;
 }
+input.text-4xl, textarea.text-4xl {
+  font-size: 2.25rem !important;
+}
 
 /* Hide Next.js dev indicators */
 [data-nextjs-dialog-overlay],
