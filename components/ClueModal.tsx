@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 
 interface Player {
   id: number;
@@ -16,6 +16,7 @@ interface Clue {
   question: string;
   isRevealed: boolean;
   isDailyDouble: boolean;
+  pun: string;
 }
 
 interface ClueModalProps {
@@ -67,8 +68,22 @@ export default function ClueModal({
   const [resolved, setResolved] = useState(false);
   const [correctPlayerId, setCorrectPlayerId] = useState<number | undefined>(undefined);
   const resolvedRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const effectiveValue = clue.isDailyDouble && ddPlayer ? wager : clue.value;
+
+  // TTS playback disabled temporarily
+  // useEffect(() => {
+  //   if (showQuestion && clue.pun) {
+  //     const audio = new Audio(`/audio/clue-${clue.id}.mp3`);
+  //     audio.play().catch(() => {});
+  //     audioRef.current = audio;
+  //     return () => {
+  //       audio.pause();
+  //       audio.currentTime = 0;
+  //     };
+  //   }
+  // }, [showQuestion, clue.id, clue.pun]);
 
   function resolve() {
     if (resolvedRef.current) return;

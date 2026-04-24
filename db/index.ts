@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS clues (
   answer TEXT NOT NULL,
   question TEXT NOT NULL,
   is_revealed INTEGER NOT NULL DEFAULT 0,
-  is_daily_double INTEGER NOT NULL DEFAULT 0
+  is_daily_double INTEGER NOT NULL DEFAULT 0,
+  pun TEXT NOT NULL DEFAULT ''
 );
 
 CREATE TABLE IF NOT EXISTS players (
@@ -58,6 +59,11 @@ try {
 }
 try {
   sqlite.exec(`ALTER TABLE categories ADD COLUMN description TEXT NOT NULL DEFAULT ''`);
+} catch {
+  // Column already exists
+}
+try {
+  sqlite.exec(`ALTER TABLE clues ADD COLUMN pun TEXT NOT NULL DEFAULT ''`);
 } catch {
   // Column already exists
 }

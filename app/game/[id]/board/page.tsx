@@ -11,6 +11,7 @@ interface Clue {
   question: string;
   isRevealed: boolean;
   isDailyDouble: boolean;
+  pun: string;
 }
 
 interface Category {

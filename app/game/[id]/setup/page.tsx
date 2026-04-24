@@ -9,6 +9,7 @@ interface ClueData {
   answer: string;
   question: string;
   isDailyDouble: boolean;
+  pun: string;
 }
 
 interface CategoryData {
@@ -203,8 +204,12 @@ export default function SetupPage({
 
       const res = await fetch(`/api/games/${id}/generate`, { method: "POST" });
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Generation failed");
+        let msg = "Generation failed — try again";
+        try {
+          const data = await res.json();
+          msg = data.error || msg;
+        } catch {}
+        throw new Error(msg);
       }
 
       // Reload game data to get the generated clues

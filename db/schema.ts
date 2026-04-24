@@ -36,6 +36,7 @@ export const clues = sqliteTable("clues", {
   isDailyDouble: integer("is_daily_double", { mode: "boolean" })
     .notNull()
     .default(false),
+  pun: text("pun").notNull().default(""),
 });
 
 export const players = sqliteTable("players", {

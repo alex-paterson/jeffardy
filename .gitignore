@@ -36,6 +36,9 @@ yarn-error.log*
 # sqlite
 *.db
 
+# generated audio
+public/audio/
+
 # vercel
 .vercel
 
