@@ -19,15 +19,75 @@ interface Clue {
   pun: string;
 }
 
+interface BuzzedPlayer {
+  playerId: number;
+  playerName: string;
+}
+
 interface ClueModalProps {
   clue: Clue;
   categoryName: string;
   players: Player[];
   currentPicker: Player | null;
+  buzzedPlayer?: BuzzedPlayer | null;
+  buzzerMode?: boolean;
   onClose: (updatedPlayers: Player[], correctPlayerId?: number) => void;
   onCancel: () => void;
   onAnswer?: (clue: Clue, categoryName: string) => void;
   onDailyDoubleWager?: (clue: Clue, categoryName: string, playerName: string, wager: number) => void;
+  onBuzzClear?: (lockedOutPlayerId: number) => void;
+}
+
+function BuzzerModeControls({
+  buzzedPlayer,
+  updatedPlayers,
+  answeredWrong,
+  clueValue,
+  onCorrect,
+  onWrong,
+}: {
+  buzzedPlayer: BuzzedPlayer;
+  updatedPlayers: Player[];
+  answeredWrong: Set<number>;
+  clueValue: number;
+  onCorrect: (p: Player) => void;
+  onWrong: (p: Player) => void;
+}) {
+  // Match by ID first, fall back to name in case of any serialisation quirks
+  const player =
+    updatedPlayers.find((p) => p.id === buzzedPlayer.playerId) ??
+    updatedPlayers.find((p) => p.name === buzzedPlayer.playerName) ??
+    null;
+
+  const alreadyWrong = player ? answeredWrong.has(player.id) : false;
+
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <p className="text-jeopardy-gold text-xl md:text-3xl font-black tracking-wide">
+        🚨 {buzzedPlayer.playerName} 🚨
+      </p>
+      {player && !alreadyWrong ? (
+        <div className="flex gap-3">
+          <button
+            onClick={() => onCorrect(player)}
+            className="px-6 py-3 bg-correct text-white font-bold rounded-lg text-lg hover:brightness-110 transition"
+          >
+            Correct +${clueValue}
+          </button>
+          <button
+            onClick={() => onWrong(player)}
+            className="px-6 py-3 bg-incorrect text-white font-bold rounded-lg text-lg hover:brightness-110 transition"
+          >
+            Wrong −${clueValue}
+          </button>
+        </div>
+      ) : (
+        <p className="text-white/40 text-sm">
+          {alreadyWrong ? "Marked wrong — waiting for next buzz" : "Player not found in roster"}
+        </p>
+      )}
+    </div>
+  );
 }
 
 function persist(url: string, body: Record<string, unknown>) {
@@ -43,10 +103,13 @@ export default function ClueModal({
   categoryName,
   players,
   currentPicker,
+  buzzedPlayer,
+  buzzerMode,
   onClose,
   onCancel,
   onAnswer,
   onDailyDoubleWager,
+  onBuzzClear,
 }: ClueModalProps) {
   // Daily double: auto-pick the current picker, or first player if none
   const ddPickPlayer = currentPicker ?? players[0];
@@ -114,6 +177,11 @@ export default function ClueModal({
       prev.map((p) => (p.id === player.id ? { ...p, score: newScore } : p))
     );
     persist(`/api/players/${player.id}/score`, { delta: -effectiveValue });
+
+    // If this player had buzzed in, clear the buzz so others can buzz
+    if (buzzedPlayer?.playerId === player.id) {
+      onBuzzClear?.(player.id);
+    }
 
     const newWrong = new Set(answeredWrong).add(player.id);
     setAnsweredWrong(newWrong);
@@ -221,6 +289,15 @@ export default function ClueModal({
         </p>
       </div>
 
+      {/* Buzz Banner */}
+      {buzzedPlayer && !resolved && (
+        <div className="shrink-0 mx-4 mb-2 px-4 py-3 bg-jeopardy-gold/20 border-2 border-jeopardy-gold rounded-lg text-center animate-pulse">
+          <p className="text-jeopardy-gold font-black text-2xl md:text-4xl tracking-wide">
+            🚨 {buzzedPlayer.playerName.toUpperCase()} 🚨
+          </p>
+        </div>
+      )}
+
       {/* Clue Text */}
       <div className="flex-1 flex items-center justify-center px-6 py-4">
         <div className="text-center max-w-4xl">
@@ -263,6 +340,23 @@ export default function ClueModal({
                     Wrong -${effectiveValue.toLocaleString()}
                   </button>
                 </div>
+              </>
+            ) : buzzerMode ? (
+              <>
+                {buzzedPlayer ? (
+                  <BuzzerModeControls
+                    buzzedPlayer={buzzedPlayer}
+                    updatedPlayers={updatedPlayers}
+                    answeredWrong={answeredWrong}
+                    clueValue={clue.value}
+                    onCorrect={handleCorrect}
+                    onWrong={handleWrong}
+                  />
+                ) : (
+                  <p className="text-blue-200 text-sm md:text-lg animate-pulse">
+                    Waiting for a buzz...
+                  </p>
+                )}
               </>
             ) : (
               <>

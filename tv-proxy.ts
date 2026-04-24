@@ -59,7 +59,8 @@ const tvServer = createServer((req: IncomingMessage, res: ServerResponse) => {
     pathname.startsWith("/api") ||
     pathname.startsWith("/audio") ||
     pathname.startsWith("/favicon") ||
-    pathname.startsWith("/tv")
+    pathname.startsWith("/tv") ||
+    pathname.startsWith("/participant")
   ) {
     proxy(req, res, fullUrl);
   } else {

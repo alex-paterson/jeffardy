@@ -22,6 +22,7 @@ interface GameData {
   id: number;
   name: string;
   state: string;
+  buzzerMode: boolean;
   categories: CategoryData[];
   players: { id: number; name: string; score: number }[];
 }
@@ -549,6 +550,35 @@ export default function SetupPage({
         >
           + Add Player
         </button>
+
+        <label className="mt-4 flex items-center gap-3 cursor-pointer w-fit">
+          <div
+            onClick={() => {
+              const newVal = !game.buzzerMode;
+              setGame({ ...game, buzzerMode: newVal });
+              fetch(`/api/games/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ buzzerMode: newVal }),
+              }).catch(() => {});
+            }}
+            className={`relative w-10 h-6 rounded-full transition-colors ${
+              game.buzzerMode ? "bg-jeopardy-gold" : "bg-white/20"
+            }`}
+          >
+            <span
+              className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                game.buzzerMode ? "translate-x-5" : "translate-x-1"
+              }`}
+            />
+          </div>
+          <div>
+            <p className="text-white text-sm font-medium">Guests use buzzers</p>
+            <p className="text-white/40 text-xs">
+              Host sees only the player who buzzed — not all players
+            </p>
+          </div>
+        </label>
       </section>
 
       {/* Generate or Clue Review */}

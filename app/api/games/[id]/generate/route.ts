@@ -46,10 +46,10 @@ Each object has:
 IMPORTANT difficulty guidelines:
 - The clues MUST get progressively harder from $200 to $1000. This is critical.
 - $200: Easy — common knowledge, most people would get this.
-- $400: Moderate — requires some familiarity with the topic.
-- $600: Tricky — requires decent knowledge of the subject.
-- $800: Challenging — requires good knowledge of the subject.
-- $1000: Hard — tough but still answerable by someone who knows the topic well.
+- $400: Easy-moderate — slightly more specific but still broadly known.
+- $600: Moderate — requires some familiarity with the topic.
+- $800: Tricky — requires decent knowledge of the subject.
+- $1000: Challenging — requires solid knowledge, but still answerable by someone who knows the topic well.
 - Write clues that are clever and indirect, not just "This is the name of X." Make players think.`,
       },
     ],

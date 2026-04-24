@@ -52,7 +52,33 @@ export default function TVPage({
   const { id } = use(params);
   const [tvState, setTvState] = useState<TVState>({ screen: "waiting" });
   const [gameName, setGameName] = useState("");
+  const [buzzer, setBuzzer] = useState<{ playerName: string } | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(false);
   const eventSourceRef = useRef<EventSource | null>(null);
+  const buzzerAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Preload audio and unlock it on the first click anywhere (browser autoplay policy)
+  useEffect(() => {
+    const audio = new Audio("/buzzer.mp3");
+    audio.load();
+    buzzerAudioRef.current = audio;
+
+    function unlock() {
+      audio.play()
+        .then(() => { audio.pause(); audio.currentTime = 0; setSoundEnabled(true); })
+        .catch(() => {});
+      document.removeEventListener("click", unlock);
+    }
+    document.addEventListener("click", unlock);
+    return () => document.removeEventListener("click", unlock);
+  }, []);
+
+  function playBuzzer() {
+    const audio = buzzerAudioRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }
 
   // Load initial state and connect to SSE
   useEffect(() => {
@@ -72,8 +98,17 @@ export default function TVPage({
     const es = new EventSource(`/api/games/${id}/events`);
     es.onmessage = (event) => {
       const data = JSON.parse(event.data);
-      setTvState(data as TVState);
-      if (data.game?.name) setGameName(data.game.name);
+      if (data.type === "buzz") {
+        setBuzzer({ playerName: data.playerName });
+        playBuzzer();
+      } else if (data.type === "buzz-clear") {
+        setBuzzer(null);
+      } else {
+        setTvState(data as TVState);
+        if (data.game?.name) setGameName(data.game.name);
+        // Clear buzzer whenever we transition screens
+        if (data.screen) setBuzzer(null);
+      }
     };
     eventSourceRef.current = es;
 
@@ -87,6 +122,9 @@ export default function TVPage({
         <p className="text-3xl text-blue-200 animate-pulse">
           Connecting to game...
         </p>
+        {!soundEnabled && (
+          <p className="absolute bottom-6 text-white/30 text-sm">Click anywhere to enable sound</p>
+        )}
       </div>
     );
   }
@@ -124,6 +162,13 @@ export default function TVPage({
             {tvState.clue.answer}
           </p>
         </div>
+        {buzzer && (
+          <div className="shrink-0 py-6 text-center animate-pulse">
+            <p className="text-jeopardy-gold text-4xl md:text-6xl font-black tracking-wide">
+              🔔 {buzzer.playerName}!
+            </p>
+          </div>
+        )}
       </div>
     );
   }
@@ -194,6 +239,12 @@ export default function TVPage({
 
   return (
     <div className="flex flex-col h-screen no-select">
+      {/* Sound status indicator — disappears once enabled */}
+      {!soundEnabled && (
+        <div className="absolute top-3 right-3 z-10 text-white/30 text-xs select-none pointer-events-none">
+          🔇 click to enable sound
+        </div>
+      )}
       {/* Board */}
       <div className="flex-1 overflow-y-auto">
         <div

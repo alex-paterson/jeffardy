@@ -31,6 +31,7 @@ interface GameData {
   id: number;
   name: string;
   state: string;
+  buzzerMode: boolean;
   categories: Category[];
   players: Player[];
 }
@@ -58,6 +59,10 @@ export default function BoardPage({
   } | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [currentPickerId, setCurrentPickerId] = useState<number | null>(null);
+  const [buzzedPlayer, setBuzzedPlayer] = useState<{
+    playerId: number;
+    playerName: string;
+  } | null>(null);
   const currentPicker = game?.players.find((p) => p.id === currentPickerId) ?? null;
 
   const broadcastBoard = useCallback(
@@ -82,14 +87,38 @@ export default function BoardPage({
       .catch(() => setLoadError(true));
   }, [id]);
 
+  // Listen for buzz events from participants
+  useEffect(() => {
+    const es = new EventSource(`/api/games/${id}/events`);
+    es.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "buzz") {
+        setBuzzedPlayer({ playerId: data.playerId, playerName: data.playerName });
+      } else if (data.type === "buzz-clear") {
+        setBuzzedPlayer(null);
+      }
+    };
+    return () => es.close();
+  }, [id]);
+
   function handleClueClick(clue: Clue, categoryName: string) {
     if (clue.isRevealed) return;
+    setBuzzedPlayer(null);
     setActiveClue({ clue, categoryName });
     if (clue.isDailyDouble) {
       broadcast(id, { screen: "daily-double", categoryName });
     } else {
       broadcast(id, { screen: "clue", clue, categoryName });
     }
+  }
+
+  function handleBuzzClear(lockedOutPlayerId: number) {
+    setBuzzedPlayer(null);
+    fetch(`/api/games/${id}/buzz/clear`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lockOutPlayerId: lockedOutPlayerId }),
+    }).catch(() => {});
   }
 
   function handleClueCancel() {
@@ -276,12 +305,15 @@ export default function BoardPage({
           categoryName={activeClue.categoryName}
           players={game.players}
           currentPicker={currentPicker}
+          buzzedPlayer={buzzedPlayer}
+          buzzerMode={game.buzzerMode}
           onClose={handleClueClose}
           onCancel={handleClueCancel}
           onAnswer={(clue, catName) => handleClueAnswer(clue, catName)}
           onDailyDoubleWager={(clue, catName, playerName, wager) =>
             handleDailyDoubleWager(clue, catName, playerName, wager)
           }
+          onBuzzClear={handleBuzzClear}
         />
       )}
     </div>

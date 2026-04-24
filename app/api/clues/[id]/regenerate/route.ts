@@ -59,7 +59,7 @@ Return a JSON object with:
 - "question": the correct response (in "What is...?" or "Who is...?" form)
 - "pun": a short witty one-liner pun related to the answer
 
-Difficulty: $${clue.value} (${clue.value <= 200 ? "easy" : clue.value <= 400 ? "moderate" : clue.value <= 600 ? "tricky" : clue.value <= 800 ? "challenging" : "hard"}).
+Difficulty: $${clue.value} (${clue.value <= 200 ? "easy" : clue.value <= 400 ? "easy-moderate" : clue.value <= 600 ? "moderate" : clue.value <= 800 ? "tricky" : "challenging"}).
 Write a clever, indirect clue. Make players think.`,
       },
     ],

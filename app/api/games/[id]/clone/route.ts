@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { games, categories, clues } from "@/db/schema";
+import { games, categories, clues, players } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function POST(
@@ -15,10 +15,10 @@ export async function POST(
     return NextResponse.json({ error: "Game not found" }, { status: 404 });
   }
 
-  // Create new game
+  // Create new game (preserve buzzerMode)
   const newGame = db
     .insert(games)
-    .values({ name: `${game.name} (copy)`, state: "setup" })
+    .values({ name: `${game.name} (copy)`, state: "setup", buzzerMode: game.buzzerMode })
     .returning()
     .get();
 
@@ -60,6 +60,19 @@ export async function POST(
         })
         .run();
     }
+  }
+
+  // Copy players (reset scores to 0)
+  const gamePlayers = db
+    .select()
+    .from(players)
+    .where(eq(players.gameId, gameId))
+    .all();
+
+  for (const player of gamePlayers) {
+    db.insert(players)
+      .values({ gameId: newGame.id, name: player.name, score: 0 })
+      .run();
   }
 
   return NextResponse.json(newGame, { status: 201 });

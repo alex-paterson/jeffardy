@@ -7,6 +7,9 @@ export const games = sqliteTable("games", {
   state: text("state", { enum: ["setup", "playing", "finished"] })
     .notNull()
     .default("setup"),
+  buzzerMode: integer("buzzer_mode", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),

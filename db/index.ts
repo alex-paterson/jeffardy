@@ -67,3 +67,8 @@ try {
 } catch {
   // Column already exists
 }
+try {
+  sqlite.exec(`ALTER TABLE games ADD COLUMN buzzer_mode INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  // Column already exists
+}

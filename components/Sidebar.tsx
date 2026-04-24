@@ -17,9 +17,11 @@ export default function Sidebar() {
   const [creating, setCreating] = useState(false);
 
   const isTVMode = pathname.startsWith("/tv");
+  const isParticipantMode = pathname.startsWith("/participant");
+  const isGuestMode = isTVMode || isParticipantMode;
 
   // Extract current game ID from path
-  const gameMatch = pathname.match(/(?:\/game|\/tv)\/(\d+)/);
+  const gameMatch = pathname.match(/(?:\/game|\/tv|\/participant)\/(\d+)/);
   const currentGameId = gameMatch ? parseInt(gameMatch[1]) : null;
 
   const loadGames = useCallback(() => {
@@ -53,7 +55,9 @@ export default function Sidebar() {
   }
 
   function goToGame(game: Game) {
-    if (isTVMode) {
+    if (isParticipantMode) {
+      window.location.href = `/participant/${game.id}`;
+    } else if (isTVMode) {
       window.location.href = `/tv/${game.id}`;
     } else if (game.state === "setup") {
       window.location.href = `/game/${game.id}/setup`;
@@ -101,14 +105,20 @@ export default function Sidebar() {
         <div className="p-4 pt-16">
           <h2
             className="text-jeopardy-gold font-bold text-xl tracking-wide cursor-pointer hover:opacity-80"
-            onClick={() => (window.location.href = isTVMode ? "/tv" : "/")}
+            onClick={() =>
+              (window.location.href = isParticipantMode
+                ? "/participant"
+                : isTVMode
+                ? "/tv"
+                : "/")
+            }
           >
             JEFFARDY!
           </h2>
         </div>
 
         {/* New Game — host only */}
-        {!isTVMode && (
+        {!isGuestMode && (
           <div className="px-4 pb-4 border-b border-white/10">
             <div className="flex gap-2">
               <input
@@ -162,7 +172,7 @@ export default function Sidebar() {
                   </button>
 
                   {/* Quick actions for current game — host only */}
-                  {isCurrent && game.state !== "setup" && !isTVMode && (
+                  {isCurrent && game.state !== "setup" && !isGuestMode && (
                     <div className="ml-3 mt-1 mb-2 flex flex-col gap-1">
                       <button
                         onClick={() =>
@@ -193,7 +203,13 @@ export default function Sidebar() {
         {/* Footer */}
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={() => (window.location.href = isTVMode ? "/tv" : "/")}
+            onClick={() =>
+              (window.location.href = isParticipantMode
+                ? "/participant"
+                : isTVMode
+                ? "/tv"
+                : "/")
+            }
             className="w-full text-left px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
           >
             Home
