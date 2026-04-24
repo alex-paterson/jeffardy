@@ -60,7 +60,8 @@ const tvServer = createServer((req: IncomingMessage, res: ServerResponse) => {
     pathname.startsWith("/audio") ||
     pathname.startsWith("/favicon") ||
     pathname.startsWith("/tv") ||
-    pathname.startsWith("/participant")
+    pathname.startsWith("/participant") ||
+    /\.[a-z0-9]+$/i.test(pathname)  // any file with an extension (static assets)
   ) {
     proxy(req, res, fullUrl);
   } else {
