@@ -16,8 +16,10 @@ export default function Sidebar() {
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
 
+  const isTVMode = pathname.startsWith("/tv");
+
   // Extract current game ID from path
-  const gameMatch = pathname.match(/\/game\/(\d+)/);
+  const gameMatch = pathname.match(/(?:\/game|\/tv)\/(\d+)/);
   const currentGameId = gameMatch ? parseInt(gameMatch[1]) : null;
 
   const loadGames = useCallback(() => {
@@ -51,7 +53,9 @@ export default function Sidebar() {
   }
 
   function goToGame(game: Game) {
-    if (game.state === "setup") {
+    if (isTVMode) {
+      window.location.href = `/tv/${game.id}`;
+    } else if (game.state === "setup") {
       window.location.href = `/game/${game.id}/setup`;
     } else if (game.state === "playing") {
       window.location.href = `/game/${game.id}/board`;
@@ -97,32 +101,34 @@ export default function Sidebar() {
         <div className="p-4 pt-16">
           <h2
             className="text-jeopardy-gold font-bold text-xl tracking-wide cursor-pointer hover:opacity-80"
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = isTVMode ? "/tv" : "/")}
           >
-            JEOPARDY!
+            JEFFARDY!
           </h2>
         </div>
 
-        {/* New Game */}
-        <div className="px-4 pb-4 border-b border-white/10">
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={newName}
-              onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && createGame()}
-              placeholder="Game name"
-              className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-white/30 focus:outline-none focus:border-jeopardy-gold"
-            />
-            <button
-              onClick={createGame}
-              disabled={creating}
-              className="px-3 py-2 bg-jeopardy-gold text-jeopardy-dark font-bold rounded-lg text-sm hover:bg-jeopardy-gold-light disabled:opacity-50 transition-colors shrink-0"
-            >
-              {creating ? "..." : "New"}
-            </button>
+        {/* New Game — host only */}
+        {!isTVMode && (
+          <div className="px-4 pb-4 border-b border-white/10">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && createGame()}
+                placeholder="Game name"
+                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-white/30 focus:outline-none focus:border-jeopardy-gold"
+              />
+              <button
+                onClick={createGame}
+                disabled={creating}
+                className="px-3 py-2 bg-jeopardy-gold text-jeopardy-dark font-bold rounded-lg text-sm hover:bg-jeopardy-gold-light disabled:opacity-50 transition-colors shrink-0"
+              >
+                {creating ? "..." : "New"}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Game List */}
         <div className="flex-1 overflow-y-auto p-4">
@@ -155,8 +161,8 @@ export default function Sidebar() {
                     </span>
                   </button>
 
-                  {/* Quick actions for current game */}
-                  {isCurrent && game.state !== "setup" && (
+                  {/* Quick actions for current game — host only */}
+                  {isCurrent && game.state !== "setup" && !isTVMode && (
                     <div className="ml-3 mt-1 mb-2 flex flex-col gap-1">
                       <button
                         onClick={() =>
@@ -187,7 +193,7 @@ export default function Sidebar() {
         {/* Footer */}
         <div className="p-4 border-t border-white/10">
           <button
-            onClick={() => (window.location.href = "/")}
+            onClick={() => (window.location.href = isTVMode ? "/tv" : "/")}
             className="w-full text-left px-3 py-2 text-sm text-white/50 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
           >
             Home

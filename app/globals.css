@@ -30,3 +30,10 @@ body {
 input, textarea, select {
   font-size: 16px !important;
 }
+
+/* Hide Next.js dev indicators */
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast],
+nextjs-portal {
+  display: none !important;
+}

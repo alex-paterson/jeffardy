@@ -26,6 +26,8 @@ interface ClueModalProps {
   currentPicker: Player | null;
   onClose: (updatedPlayers: Player[], correctPlayerId?: number) => void;
   onCancel: () => void;
+  onAnswer?: (clue: Clue, categoryName: string) => void;
+  onDailyDoubleWager?: (clue: Clue, categoryName: string, playerName: string, wager: number) => void;
 }
 
 function persist(url: string, body: Record<string, unknown>) {
@@ -43,18 +45,20 @@ export default function ClueModal({
   currentPicker,
   onClose,
   onCancel,
+  onAnswer,
+  onDailyDoubleWager,
 }: ClueModalProps) {
-  // Daily double: skip pick-player if we already know who's picking
-  const autoPickDD = clue.isDailyDouble && currentPicker;
+  // Daily double: auto-pick the current picker, or first player if none
+  const ddPickPlayer = currentPicker ?? players[0];
   const [ddPhase, setDdPhase] = useState<
-    "pick-player" | "wager" | "play"
-  >(clue.isDailyDouble ? (autoPickDD ? "wager" : "pick-player") : "play");
-  const [ddPlayer, setDdPlayer] = useState<Player | null>(
-    autoPickDD ? currentPicker : null
+    "wager" | "play"
+  >(clue.isDailyDouble ? "wager" : "play");
+  const [ddPlayer] = useState<Player | null>(
+    clue.isDailyDouble ? ddPickPlayer : null
   );
   const [wager, setWager] = useState(() => {
-    if (autoPickDD && currentPicker) {
-      const maxWager = currentPicker.score > 0 ? currentPicker.score : clue.value;
+    if (clue.isDailyDouble && ddPickPlayer) {
+      const maxWager = ddPickPlayer.score > 0 ? ddPickPlayer.score : clue.value;
       return Math.min(clue.value, maxWager);
     }
     return clue.value;
@@ -91,6 +95,7 @@ export default function ClueModal({
     persist(`/api/clues/${clue.id}`, { isRevealed: true });
     setShowQuestion(true);
     setResolved(true);
+    onAnswer?.(clue, categoryName);
   }
 
   function handleCorrect(player: Player) {
@@ -122,45 +127,6 @@ export default function ClueModal({
   const availablePlayers = updatedPlayers.filter(
     (p) => !answeredWrong.has(p.id)
   );
-
-  // Daily Double: pick player
-  if (ddPhase === "pick-player") {
-    return (
-      <div className="fixed inset-0 z-50 no-select bg-jeopardy-blue flex flex-col items-center justify-center overflow-y-auto">
-        <p className="text-jeopardy-gold text-4xl md:text-6xl font-bold mb-2 animate-pulse">
-          DAILY DOUBLE!
-        </p>
-        <p className="text-white/60 text-lg md:text-xl mb-8">
-          {categoryName} - ${clue.value}
-        </p>
-        <p className="text-blue-200 text-lg mb-4">Who selected this clue?</p>
-        <div className="flex flex-wrap justify-center gap-3">
-          {players.map((player) => (
-            <button
-              key={player.id}
-              onClick={() => {
-                setDdPlayer(player);
-                // Default wager: clue value, clamped to valid range
-                const maxWager =
-                  player.score > 0 ? player.score : clue.value;
-                setWager(Math.min(clue.value, maxWager));
-                setDdPhase("wager");
-              }}
-              className="px-6 py-3 bg-jeopardy-gold text-jeopardy-dark font-bold text-lg rounded-lg hover:bg-jeopardy-gold-light transition-colors"
-            >
-              {player.name}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={onCancel}
-          className="mt-6 px-4 py-2 text-sm text-white/40 border border-white/10 rounded-lg hover:bg-white/10 transition-colors"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
 
   // Daily Double: wager
   if (ddPhase === "wager" && ddPlayer) {
@@ -225,8 +191,10 @@ export default function ClueModal({
 
         <button
           onClick={() => {
-            setWager(Math.max(minWager, Math.min(clampedWager, maxWager)));
+            const finalWager = Math.max(minWager, Math.min(clampedWager, maxWager));
+            setWager(finalWager);
             setDdPhase("play");
+            onDailyDoubleWager?.(clue, categoryName, ddPlayer.name, finalWager);
           }}
           className="px-10 py-4 bg-jeopardy-gold text-jeopardy-dark font-bold text-xl rounded-xl hover:bg-jeopardy-gold-light transition-colors"
         >

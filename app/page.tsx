@@ -51,9 +51,9 @@ export default function Home() {
   return (
     <main className="flex-1 flex flex-col items-center justify-center p-8">
       <h1 className="text-6xl font-bold text-jeopardy-gold mb-2 tracking-wide">
-        JEOPARDY!
+        JEFFARDY!
       </h1>
-      <p className="text-xl text-blue-200 mb-12">AI-Powered Party Game</p>
+      <p className="text-xl text-blue-200 mb-12">AI-Powered Trivia Game</p>
 
       <div className="flex gap-3 mb-12 w-full max-w-md">
         <input

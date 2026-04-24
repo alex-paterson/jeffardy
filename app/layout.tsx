@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jeopardy!",
-  description: "AI-powered Jeopardy game for friends",
+  title: "Jeffardy!",
+  description: "AI-powered Jeffardy game for friends",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
 };
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useCallback, use } from "react";
 import ClueModal from "@/components/ClueModal";
 
 interface Clue {
@@ -37,6 +37,14 @@ interface GameData {
 
 const VALUES = [200, 400, 600, 800, 1000];
 
+function broadcast(gameId: string, data: Record<string, unknown>) {
+  fetch(`/api/games/${gameId}/broadcast`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  }).catch(() => {});
+}
+
 export default function BoardPage({
   params,
 }: {
@@ -52,24 +60,45 @@ export default function BoardPage({
   const [currentPickerId, setCurrentPickerId] = useState<number | null>(null);
   const currentPicker = game?.players.find((p) => p.id === currentPickerId) ?? null;
 
+  const broadcastBoard = useCallback(
+    (gameData: GameData, pickerId: number | null) => {
+      broadcast(id, {
+        screen: "board",
+        game: gameData,
+        currentPickerId: pickerId,
+      });
+    },
+    [id]
+  );
+
   // Load game data once on mount
   useEffect(() => {
     fetch(`/api/games/${id}`)
       .then((r) => r.json())
-      .then(setGame)
+      .then((data: GameData) => {
+        setGame(data);
+        broadcast(id, { screen: "board", game: data, currentPickerId: null });
+      })
       .catch(() => setLoadError(true));
   }, [id]);
 
   function handleClueClick(clue: Clue, categoryName: string) {
     if (clue.isRevealed) return;
     setActiveClue({ clue, categoryName });
+    if (clue.isDailyDouble) {
+      broadcast(id, { screen: "daily-double", categoryName });
+    } else {
+      broadcast(id, { screen: "clue", clue, categoryName });
+    }
   }
 
   function handleClueCancel() {
     setActiveClue(null);
+    if (game) broadcastBoard(game, currentPickerId);
   }
 
   function handleClueClose(updatedPlayers: Player[], correctPlayerId?: number) {
+    const newPickerId = correctPlayerId ?? currentPickerId;
     if (correctPlayerId) {
       setCurrentPickerId(correctPlayerId);
     }
@@ -98,15 +127,38 @@ export default function BoardPage({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ state: "finished" }),
         }).catch(() => {});
+        broadcast(id, { screen: "final", players: updatedPlayers });
         setTimeout(() => {
           window.location.href = `/game/${id}/final`;
         }, 1500);
+      } else {
+        broadcastBoard(newGame, newPickerId);
       }
 
       return newGame;
     });
 
     setActiveClue(null);
+  }
+
+  // Broadcast when clue is resolved (answer revealed)
+  function handleClueAnswer(clue: Clue, categoryName: string) {
+    broadcast(id, { screen: "answer", clue, categoryName });
+  }
+
+  // Broadcast daily double wager
+  function handleDailyDoubleWager(
+    clue: Clue,
+    categoryName: string,
+    playerName: string,
+    wager: number
+  ) {
+    broadcast(id, {
+      screen: "clue",
+      clue,
+      categoryName,
+      dailyDouble: { playerName, wager },
+    });
   }
 
   if (loadError) {
@@ -226,6 +278,10 @@ export default function BoardPage({
           currentPicker={currentPicker}
           onClose={handleClueClose}
           onCancel={handleClueCancel}
+          onAnswer={(clue, catName) => handleClueAnswer(clue, catName)}
+          onDailyDoubleWager={(clue, catName, playerName, wager) =>
+            handleDailyDoubleWager(clue, catName, playerName, wager)
+          }
         />
       )}
     </div>
