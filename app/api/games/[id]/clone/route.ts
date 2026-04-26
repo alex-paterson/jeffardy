@@ -15,10 +15,10 @@ export async function POST(
     return NextResponse.json({ error: "Game not found" }, { status: 404 });
   }
 
-  // Create new game (preserve buzzerMode)
+  // Create new game (preserve buzzerMode and imageMode)
   const newGame = db
     .insert(games)
-    .values({ name: `${game.name} (copy)`, state: "setup", buzzerMode: game.buzzerMode })
+    .values({ name: `${game.name} (copy)`, state: "setup", buzzerMode: game.buzzerMode, imageMode: game.imageMode })
     .returning()
     .get();
 

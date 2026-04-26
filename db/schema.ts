@@ -10,6 +10,9 @@ export const games = sqliteTable("games", {
   buzzerMode: integer("buzzer_mode", { mode: "boolean" })
     .notNull()
     .default(false),
+  imageMode: integer("image_mode", { mode: "boolean" })
+    .notNull()
+    .default(false),
   createdAt: text("created_at")
     .notNull()
     .default(sql`(datetime('now'))`),
@@ -40,6 +43,7 @@ export const clues = sqliteTable("clues", {
     .notNull()
     .default(false),
   pun: text("pun").notNull().default(""),
+  imagePath: text("image_path").notNull().default(""),
 });
 
 export const players = sqliteTable("players", {

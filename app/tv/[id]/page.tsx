@@ -11,6 +11,7 @@ interface Clue {
   isRevealed: boolean;
   isDailyDouble: boolean;
   pun: string;
+  imagePath: string;
 }
 
 interface Category {
@@ -177,9 +178,18 @@ export default function TVPage({
           </p>
         </div>
         <div className="flex-1 flex items-center justify-center px-8 py-4">
-          <p className="text-white text-2xl md:text-4xl lg:text-5xl text-center leading-snug font-light max-w-5xl">
-            {tvState.clue.answer}
-          </p>
+          {tvState.clue.imagePath ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={tvState.clue.imagePath}
+              alt="Image clue"
+              className="max-h-[60vh] max-w-full object-contain rounded-xl"
+            />
+          ) : (
+            <p className="text-white text-2xl md:text-4xl lg:text-5xl text-center leading-snug font-light max-w-5xl">
+              {tvState.clue.answer}
+            </p>
+          )}
         </div>
         {buzzer && (
           <div className="shrink-0 py-4 text-center animate-pulse">
@@ -201,10 +211,19 @@ export default function TVPage({
             {tvState.categoryName}
           </p>
         </div>
-        <div className="flex-1 flex flex-col items-center justify-center px-8 py-4">
-          <p className="text-white/60 text-2xl md:text-3xl lg:text-4xl text-center leading-snug font-light max-w-5xl mb-8">
-            {tvState.clue.answer}
-          </p>
+        <div className="flex-1 flex flex-col items-center justify-center px-8 py-4 gap-6">
+          {tvState.clue.imagePath ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={tvState.clue.imagePath}
+              alt="Image clue"
+              className="max-h-48 md:max-h-64 object-contain rounded-xl opacity-60"
+            />
+          ) : (
+            <p className="text-white/60 text-2xl md:text-3xl lg:text-4xl text-center leading-snug font-light max-w-5xl">
+              {tvState.clue.answer}
+            </p>
+          )}
           <p className="text-jeopardy-gold text-3xl md:text-5xl lg:text-6xl font-bold text-center max-w-4xl">
             {tvState.clue.question}
           </p>

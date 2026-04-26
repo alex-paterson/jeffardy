@@ -72,3 +72,13 @@ try {
 } catch {
   // Column already exists
 }
+try {
+  sqlite.exec(`ALTER TABLE games ADD COLUMN image_mode INTEGER NOT NULL DEFAULT 0`);
+} catch {
+  // Column already exists
+}
+try {
+  sqlite.exec(`ALTER TABLE clues ADD COLUMN image_path TEXT NOT NULL DEFAULT ''`);
+} catch {
+  // Column already exists
+}

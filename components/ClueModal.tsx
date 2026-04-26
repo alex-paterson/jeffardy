@@ -17,6 +17,7 @@ interface Clue {
   isRevealed: boolean;
   isDailyDouble: boolean;
   pun: string;
+  imagePath: string;
 }
 
 interface BuzzedPlayer {
@@ -31,6 +32,7 @@ interface ClueModalProps {
   currentPicker: Player | null;
   buzzedPlayer?: BuzzedPlayer | null;
   buzzerMode?: boolean;
+  imageMode?: boolean;
   onClose: (updatedPlayers: Player[], correctPlayerId?: number) => void;
   onCancel: () => void;
   onAnswer?: (clue: Clue, categoryName: string) => void;
@@ -105,6 +107,7 @@ export default function ClueModal({
   currentPicker,
   buzzedPlayer,
   buzzerMode,
+  imageMode,
   onClose,
   onCancel,
   onAnswer,
@@ -298,12 +301,24 @@ export default function ClueModal({
         </div>
       )}
 
-      {/* Clue Text */}
-      <div className="flex-1 flex items-center justify-center px-6 py-4">
-        <div className="text-center max-w-4xl">
-          <p className="text-white text-2xl md:text-4xl lg:text-6xl leading-snug font-light">
-            {clue.answer}
-          </p>
+      {/* Clue Content */}
+      <div className="flex-1 flex items-center justify-center px-6 py-4 overflow-hidden">
+        <div className="text-center max-w-4xl w-full">
+          {imageMode && clue.imagePath ? (
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={clue.imagePath}
+                alt="Image clue"
+                className="max-h-72 md:max-h-96 w-auto mx-auto rounded-xl object-contain"
+              />
+              <p className="text-white/40 text-xs mt-2 italic">{clue.answer}</p>
+            </>
+          ) : (
+            <p className="text-white text-2xl md:text-4xl lg:text-6xl leading-snug font-light">
+              {clue.answer}
+            </p>
+          )}
           {showQuestion && (
             <p className="text-jeopardy-gold text-xl md:text-3xl lg:text-4xl font-bold mt-6">
               {clue.question}

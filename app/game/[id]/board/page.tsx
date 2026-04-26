@@ -12,6 +12,7 @@ interface Clue {
   isRevealed: boolean;
   isDailyDouble: boolean;
   pun: string;
+  imagePath: string;
 }
 
 interface Category {
@@ -32,6 +33,7 @@ interface GameData {
   name: string;
   state: string;
   buzzerMode: boolean;
+  imageMode: boolean;
   categories: Category[];
   players: Player[];
 }
@@ -319,6 +321,7 @@ export default function BoardPage({
           currentPicker={currentPicker}
           buzzedPlayer={buzzedPlayer}
           buzzerMode={game.buzzerMode}
+          imageMode={game.imageMode}
           onClose={handleClueClose}
           onCancel={handleClueCancel}
           onAnswer={(clue, catName) => handleClueAnswer(clue, catName)}

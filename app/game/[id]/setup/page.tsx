@@ -10,6 +10,7 @@ interface ClueData {
   question: string;
   isDailyDouble: boolean;
   pun: string;
+  imagePath: string;
 }
 
 interface CategoryData {
@@ -23,6 +24,7 @@ interface GameData {
   name: string;
   state: string;
   buzzerMode: boolean;
+  imageMode: boolean;
   categories: CategoryData[];
   players: { id: number; name: string; score: number }[];
 }
@@ -235,7 +237,7 @@ export default function SetupPage({
                 ...cat,
                 clues: cat.clues.map((clue, cli) =>
                   cli === clueIndex
-                    ? { ...clue, answer: updated.answer, question: updated.question, pun: updated.pun }
+                    ? { ...clue, answer: updated.answer, question: updated.question, pun: updated.pun, imagePath: updated.imagePath ?? "" }
                     : clue
                 ),
               }
@@ -551,34 +553,65 @@ export default function SetupPage({
           + Add Player
         </button>
 
-        <label className="mt-4 flex items-center gap-3 cursor-pointer w-fit">
-          <div
-            onClick={() => {
-              const newVal = !game.buzzerMode;
-              setGame({ ...game, buzzerMode: newVal });
-              fetch(`/api/games/${id}`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ buzzerMode: newVal }),
-              }).catch(() => {});
-            }}
-            className={`relative w-10 h-6 rounded-full transition-colors ${
-              game.buzzerMode ? "bg-jeopardy-gold" : "bg-white/20"
-            }`}
-          >
-            <span
-              className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
-                game.buzzerMode ? "translate-x-5" : "translate-x-1"
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="flex items-center gap-3 cursor-pointer w-fit">
+            <div
+              onClick={() => {
+                const newVal = !game.buzzerMode;
+                setGame({ ...game, buzzerMode: newVal });
+                fetch(`/api/games/${id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ buzzerMode: newVal }),
+                }).catch(() => {});
+              }}
+              className={`relative w-10 h-6 rounded-full transition-colors ${
+                game.buzzerMode ? "bg-jeopardy-gold" : "bg-white/20"
               }`}
-            />
-          </div>
-          <div>
-            <p className="text-white text-sm font-medium">Guests use buzzers</p>
-            <p className="text-white/40 text-xs">
-              Host sees only the player who buzzed — not all players
-            </p>
-          </div>
-        </label>
+            >
+              <span
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                  game.buzzerMode ? "translate-x-5" : "translate-x-1"
+                }`}
+              />
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Guests use buzzers</p>
+              <p className="text-white/40 text-xs">
+                Host sees only the player who buzzed — not all players
+              </p>
+            </div>
+          </label>
+
+          <label className="flex items-center gap-3 cursor-pointer w-fit">
+            <div
+              onClick={() => {
+                const newVal = !game.imageMode;
+                setGame({ ...game, imageMode: newVal });
+                fetch(`/api/games/${id}`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ imageMode: newVal }),
+                }).catch(() => {});
+              }}
+              className={`relative w-10 h-6 rounded-full transition-colors ${
+                game.imageMode ? "bg-jeopardy-gold" : "bg-white/20"
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                  game.imageMode ? "translate-x-5" : "translate-x-1"
+                }`}
+              />
+            </div>
+            <div>
+              <p className="text-white text-sm font-medium">Image mode</p>
+              <p className="text-white/40 text-xs">
+                Players see an AI-generated image and guess what it shows — no text clues
+              </p>
+            </div>
+          </label>
+        </div>
       </section>
 
       {/* Generate or Clue Review */}
@@ -593,8 +626,9 @@ export default function SetupPage({
           </button>
           {generating && (
             <p className="text-blue-200 text-sm animate-pulse">
-              AI is crafting your clues... this takes a few seconds per
-              category.
+              {game.imageMode
+                ? "AI is generating clues and images... this takes a minute or two."
+                : "AI is crafting your clues... this takes a few seconds per category."}
             </p>
           )}
         </div>
@@ -665,9 +699,24 @@ export default function SetupPage({
                             </div>
                           </div>
                           <div className="space-y-2">
+                            {game.imageMode && clue.imagePath && (
+                              <div className="rounded-lg overflow-hidden bg-black/20 aspect-square w-full max-h-[20vh]">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={clue.imagePath}
+                                  alt={clue.answer}
+                                  className="w-full h-full object-contain"
+                                />
+                              </div>
+                            )}
+                            {game.imageMode && !clue.imagePath && (
+                              <div className="rounded-lg bg-white/5 border border-white/10 h-24 flex items-center justify-center">
+                                <p className="text-white/30 text-xs">No image generated</p>
+                              </div>
+                            )}
                             <div>
                               <label className="text-white/50 text-xs uppercase tracking-wide">
-                                Clue
+                                {game.imageMode ? "Image prompt" : "Clue"}
                               </label>
                               <textarea
                                 value={clue.answer}
