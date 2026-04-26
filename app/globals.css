@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-jeopardy-blue: #060CE9;
+  --color-jeopardy-dark: #000428;
+  --color-jeopardy-gold: #FFCC00;
+  --color-jeopardy-gold-light: #FFD633;
+  --color-board-cell: #0a0fc2;
+  --color-board-cell-hover: #1a1fd2;
+  --color-board-cell-revealed: #1a1a3e;
+  --color-correct: #22c55e;
+  --color-incorrect: #ef4444;
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+body {
+  background: var(--color-jeopardy-dark);
+  color: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* TV-friendly: prevent text selection on the game board */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Prevent iOS zoom on input focus */
+input, textarea, select {
+  font-size: 16px !important;
+}
+input.text-4xl, textarea.text-4xl {
+  font-size: 2.25rem !important;
+}
+
+/* Hide Next.js dev indicators */
+[data-nextjs-dialog-overlay],
+[data-nextjs-toast],
+nextjs-portal {
+  display: none !important;
+}
