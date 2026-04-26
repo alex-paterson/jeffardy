@@ -102,13 +102,13 @@ ${JSON.stringify(draftClues, null, 2)}`,
   return clueArray;
 }
 
-async function generateTTS(text: string, clueId: number): Promise<void> {
+async function generateTTS(text: string, clueId: number, suffix: string): Promise<void> {
   const audioDir = path.join(process.cwd(), "public", "audio");
   if (!fs.existsSync(audioDir)) {
     fs.mkdirSync(audioDir, { recursive: true });
   }
 
-  const filePath = path.join(audioDir, `clue-${clueId}.mp3`);
+  const filePath = path.join(audioDir, `clue-${clueId}-${suffix}.mp3`);
 
   try {
     const response = await openai.audio.speech.create({
@@ -149,8 +149,10 @@ export async function POST(
   for (const cat of gameCats) {
     const existing = db.select().from(clues).where(eq(clues.categoryId, cat.id)).all();
     for (const c of existing) {
-      const audioPath = path.join(process.cwd(), "public", "audio", `clue-${c.id}.mp3`);
-      if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+      for (const suffix of ["clue", "pun"]) {
+        const audioPath = path.join(process.cwd(), "public", "audio", `clue-${c.id}-${suffix}.mp3`);
+        if (fs.existsSync(audioPath)) fs.unlinkSync(audioPath);
+      }
     }
     db.delete(clues).where(eq(clues.categoryId, cat.id)).run();
   }
@@ -172,7 +174,7 @@ export async function POST(
           .returning()
           .get()
       );
-      return { category: cat.name, clues: inserted, puns: generated.map((g) => g.pun) };
+      return { category: cat.name, clues: inserted, answers: generated.map((g) => g.answer), puns: generated.map((g) => g.pun) };
     })
   );
 
@@ -186,14 +188,15 @@ export async function POST(
       .run();
   }
 
-  // TTS disabled temporarily
-  // const ttsPromises = results.flatMap((r) =>
-  //   r.clues.map((clue, i) => {
-  //     const pun = r.puns[i];
-  //     return pun ? generateTTS(pun, clue.id) : Promise.resolve();
-  //   })
-  // );
-  // await Promise.all(ttsPromises);
+  const ttsPromises = results.flatMap((r) =>
+    r.clues.flatMap((clue, i) => {
+      const promises: Promise<void>[] = [];
+      if (r.answers[i]) promises.push(generateTTS(r.answers[i], clue.id, "clue"));
+      if (r.puns[i]) promises.push(generateTTS(r.puns[i], clue.id, "pun"));
+      return promises;
+    })
+  );
+  await Promise.all(ttsPromises);
 
   return NextResponse.json(results);
 }

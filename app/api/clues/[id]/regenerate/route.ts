@@ -3,8 +3,29 @@ import { db } from "@/db";
 import { clues, categories } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import OpenAI from "openai";
+import fs from "fs";
+import path from "path";
 
 const openai = new OpenAI();
+
+async function generateTTS(text: string, clueId: number, suffix: string): Promise<void> {
+  const audioDir = path.join(process.cwd(), "public", "audio");
+  if (!fs.existsSync(audioDir)) {
+    fs.mkdirSync(audioDir, { recursive: true });
+  }
+  const filePath = path.join(audioDir, `clue-${clueId}-${suffix}.mp3`);
+  try {
+    const response = await openai.audio.speech.create({
+      model: "tts-1",
+      voice: "onyx",
+      input: text,
+    });
+    const buffer = Buffer.from(await response.arrayBuffer());
+    fs.writeFileSync(filePath, buffer);
+  } catch {
+    // TTS generation failed silently — game works without audio
+  }
+}
 
 export async function POST(
   _request: Request,
@@ -81,6 +102,12 @@ Write a clever, indirect clue. Make players think.`,
     .where(eq(clues.id, clueId))
     .returning()
     .get();
+
+  // Regenerate audio for both the clue reading and the pun
+  const audioPromises: Promise<void>[] = [];
+  if (parsed.answer) audioPromises.push(generateTTS(parsed.answer, clueId, "clue"));
+  if (parsed.pun) audioPromises.push(generateTTS(parsed.pun, clueId, "pun"));
+  await Promise.all(audioPromises);
 
   return NextResponse.json(updated);
 }

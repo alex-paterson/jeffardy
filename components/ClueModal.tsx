@@ -139,18 +139,36 @@ export default function ClueModal({
 
   const effectiveValue = clue.isDailyDouble && ddPlayer ? wager : clue.value;
 
-  // TTS playback disabled temporarily
-  // useEffect(() => {
-  //   if (showQuestion && clue.pun) {
-  //     const audio = new Audio(`/audio/clue-${clue.id}.mp3`);
-  //     audio.play().catch(() => {});
-  //     audioRef.current = audio;
-  //     return () => {
-  //       audio.pause();
-  //       audio.currentTime = 0;
-  //     };
-  //   }
-  // }, [showQuestion, clue.id, clue.pun]);
+  // Play host reading the clue when play phase begins (or immediately for non-daily-double)
+  useEffect(() => {
+    if (ddPhase === "play") {
+      const audio = new Audio(`/audio/clue-${clue.id}-clue.mp3`);
+      audio.play().catch(() => {});
+      audioRef.current = audio;
+      return () => {
+        audio.pause();
+        audio.currentTime = 0;
+      };
+    }
+  }, [clue.id, ddPhase]);
+
+  // Play pun audio after the question is revealed
+  useEffect(() => {
+    if (showQuestion && clue.pun) {
+      // Stop clue reading if still playing
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.currentTime = 0;
+      }
+      const audio = new Audio(`/audio/clue-${clue.id}-pun.mp3`);
+      audio.play().catch(() => {});
+      audioRef.current = audio;
+      return () => {
+        audio.pause();
+        audio.currentTime = 0;
+      };
+    }
+  }, [showQuestion, clue.id, clue.pun]);
 
   function resolve() {
     if (resolvedRef.current) return;
