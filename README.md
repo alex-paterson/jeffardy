@@ -1,3 +1,7 @@
+🚨 Made with Claude
+
+---
+
 # Jeffardy
 
 An AI-powered Jeopardy game for hosting with friends. The host controls the board, players buzz in on their phones, and a TV display shows the game state in real time.
@@ -47,6 +51,7 @@ An AI-powered Jeopardy game for hosting with friends. The host controls the boar
    ```
 
 This starts two servers:
+
 - **Port 3000** — host controller (keep this on your device)
 - **Port 3001** — TV display and participant buzzer proxy (open on the TV and players' phones)
 
@@ -71,6 +76,7 @@ This starts two servers:
 ### Buzzer mode
 
 Enable **"Guests use buzzers"** on the setup page to activate phone-based buzzing:
+
 - Players open the participant URL and select their name
 - A 5-second delay after each clue opens prevents early buzzing
 - Buzzing during the delay applies a 2-second penalty
@@ -81,6 +87,6 @@ Enable **"Guests use buzzers"** on the setup page to activate phone-based buzzin
 
 - [Next.js 16](https://nextjs.org) — React framework, App Router
 - [Drizzle ORM](https://orm.drizzle.team) + SQLite (better-sqlite3) — local database
-- [OpenAI API](https://platform.openai.com) — clue generation (GPT) 
+- [OpenAI API](https://platform.openai.com) — clue generation (GPT)
 - Server-Sent Events — real-time game state to TV and participants
 - [Tailwind CSS 4](https://tailwindcss.com) — styling
