@@ -6,6 +6,8 @@
 
 An AI-powered Jeopardy game for hosting with friends. The host controls the board, players buzz in on their phones, and a TV display shows the game state in real time.
 
+![TV display showing a Jeopardy board](docs/img/tv.png)
+
 ## Features
 
 - AI-generated clue boards using OpenAI (with a two-pass reflection step for accuracy)
@@ -16,6 +18,20 @@ An AI-powered Jeopardy game for hosting with friends. The host controls the boar
 - Clone games to reuse categories with fresh AI-generated clues
 - Regenerate individual clues without redoing the whole board
 - Optional "Guests use buzzers" mode — host sees only the player who buzzed first
+
+## Screenshots
+
+**Host setup** — categories, players, and AI clue generation:
+
+![Game setup screen](docs/img/setup.png)
+
+**On phones** — the host controller (left) and the participant buzzer (right):
+
+<p>
+  <img src="docs/img/host-mobile.png" alt="Host controller on mobile" width="45%" />
+  &nbsp;
+  <img src="docs/img/participant-mobile.png" alt="Participant buzzer on mobile" width="45%" />
+</p>
 
 ## Prerequisites
 

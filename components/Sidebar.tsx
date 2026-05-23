@@ -127,7 +127,7 @@ export default function Sidebar() {
                 onChange={(e) => setNewName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && createGame()}
                 placeholder="Game name"
-                className="flex-1 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-white/30 focus:outline-none focus:border-jeopardy-gold"
+                className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm placeholder-white/30 focus:outline-none focus:border-jeopardy-gold"
               />
               <button
                 onClick={createGame}
