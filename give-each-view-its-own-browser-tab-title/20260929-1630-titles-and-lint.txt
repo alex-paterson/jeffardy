@@ -1,0 +1,123 @@
+# Rendered <title> per view (game 1 = "Friday Night")
+http://localhost:3100/                   <title>Jeffardy</title>
+http://localhost:3100/game/1/setup       <title>Friday Night · Host</title>
+http://localhost:3100/game/1/board       <title>Friday Night · Host</title>
+http://localhost:3100/game/1/final       <title>Friday Night · Host</title>
+http://localhost:3100/tv/1               <title>Friday Night · TV</title>
+http://localhost:3101/                   <title>Jeffardy · TV</title>
+http://localhost:3100/participant/1      <title>Friday Night · Buzzer</title>
+http://localhost:3100/tv                 <title>Jeffardy · TV</title>
+http://localhost:3100/participant        <title>Jeffardy · Buzzer</title>
+http://localhost:3100/game/999/board     <title>Jeffardy · Host</title>
+
+# npm run lint (errors are all in files this change does not touch)
+
+> jeopardy@0.1.0 lint
+> eslint
+
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/app/api/games/[id]/generate/route.ts
+  105:16  warning  'generateTTS' is defined but never used  @typescript-eslint/no-unused-vars
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/app/api/games/[id]/route.ts
+  26:9  warning  'gameClues' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/app/game/[id]/setup/page.tsx
+   3:31  warning  'useCallback' is defined but never used   @typescript-eslint/no-unused-vars
+   3:44  warning  'useRef' is defined but never used        @typescript-eslint/no-unused-vars
+  79:76  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/ClueModal.tsx
+    3:28  warning  'useEffect' is defined but never used          @typescript-eslint/no-unused-vars
+  138:9   warning  'audioRef' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx
+  40:5  error  Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx:40:5
+  38 |   // Close sidebar on navigation
+  39 |   useEffect(() => {
+> 40 |     setOpen(false);
+     |     ^^^^^^^ Avoid calling setState() directly within an effect
+  41 |   }, [pathname]);
+  42 |
+  43 |   async function createGame() {  react-hooks/set-state-in-effect
+  59:7  error  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx:59:7
+  57 |   function goToGame(game: Game) {
+  58 |     if (isParticipantMode) {
+> 59 |       window.location.href = `/participant/${game.id}`;
+     |       ^^^^^^^^^^^^^^^ value cannot be modified
+  60 |     } else if (isTVMode) {
+  61 |       window.location.href = `/tv/${game.id}`;
+  62 |     } else if (game.state === "setup") {                                                                                                                                                                                                                                                                                                                                                                                                                                                                            react-hooks/immutability
+  61:7  error  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx:61:7
+  59 |       window.location.href = `/participant/${game.id}`;
+  60 |     } else if (isTVMode) {
+> 61 |       window.location.href = `/tv/${game.id}`;
+     |       ^^^^^^^^^^^^^^^ value cannot be modified
+  62 |     } else if (game.state === "setup") {
+  63 |       window.location.href = `/game/${game.id}/setup`;
+  64 |     } else if (game.state === "playing") {                                                                                                                                                                                                                                                                                                                                                                                                                                         react-hooks/immutability
+  63:7  error  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx:63:7
+  61 |       window.location.href = `/tv/${game.id}`;
+  62 |     } else if (game.state === "setup") {
+> 63 |       window.location.href = `/game/${game.id}/setup`;
+     |       ^^^^^^^^^^^^^^^ value cannot be modified
+  64 |     } else if (game.state === "playing") {
+  65 |       window.location.href = `/game/${game.id}/board`;
+  66 |     } else {                                                                                                                                                                                                                                                                                                                                                                                                                                                        react-hooks/immutability
+  65:7  error  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx:65:7
+  63 |       window.location.href = `/game/${game.id}/setup`;
+  64 |     } else if (game.state === "playing") {
+> 65 |       window.location.href = `/game/${game.id}/board`;
+     |       ^^^^^^^^^^^^^^^ value cannot be modified
+  66 |     } else {
+  67 |       window.location.href = `/game/${game.id}/final`;
+  68 |     }                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   react-hooks/immutability
+  67:7  error  Error: This value cannot be modified
+
+Modifying a variable defined outside a component or hook is not allowed. Consider using an effect.
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/components/Sidebar.tsx:67:7
+  65 |       window.location.href = `/game/${game.id}/board`;
+  66 |     } else {
+> 67 |       window.location.href = `/game/${game.id}/final`;
+     |       ^^^^^^^^^^^^^^^ value cannot be modified
+  68 |     }
+  69 |   }
+  70 |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 react-hooks/immutability
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/db/index.ts
+  3:10  warning  'migrate' is defined but never used  @typescript-eslint/no-unused-vars
+  6:8   warning  'fs' is defined but never used       @typescript-eslint/no-unused-vars
+
+/home/alex/.worktrees/jeffardy/give-each-view-its-own-browser-tab-title/tv-proxy.ts
+  74:38  warning  'head' is defined but never used  @typescript-eslint/no-unused-vars
+
+✖ 16 problems (7 errors, 9 warnings)
+
+
+# eslint on the changed files
+clean (0 problems)
