@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Jeffardy!",
+  title: "Jeffardy",
   description: "AI-powered Jeffardy game for friends",
 };
 
